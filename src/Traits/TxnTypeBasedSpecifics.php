@@ -40,7 +40,7 @@ trait TxnTypeBasedSpecifics
                         'financial_account_code'    => 31, //Discount Allowed
                         'effect'        => 'debit',
                         'total'         => $this->txn['discount'],
-                        'contact_id'    => $this->txn['debit_contact_id']
+                        'contact_id'    => $this->txn['contact_id']
                     ];
                 }
 
@@ -87,7 +87,7 @@ trait TxnTypeBasedSpecifics
                         'financial_account_code'        => 52, //Discount Received
                         'effect'            => 'credit',
                         'total'             => $this->txn['discount'],
-                        'contact_id'   		=> $this->txn['credit_contact_id']
+                        'contact_id'   		=> $this->txn['contact_id']
                     ];
                 }
 
@@ -130,7 +130,7 @@ trait TxnTypeBasedSpecifics
                         'financial_account_code'    => 90, //Foreign Exchange Gain
                         'effect'        => 'credit',
                         'total'         => $this->txn['forex_gain'],
-                        'contact_id'    => $this->txn['debit_contact_id'],
+                        'contact_id'    => $this->txn['contact_id'],
                         'base_currency' =>  Auth::user()->tenant->base_currency,
                         'quote_currency' =>  Auth::user()->tenant->base_currency,
                         'exchange_rate' =>  1,
@@ -159,7 +159,7 @@ trait TxnTypeBasedSpecifics
                         'financial_account_code'    => 91, //Foreign Exchange loss
                         'effect'        => 'debit',
                         'total'         => $this->txn['forex_loss'],
-                        'contact_id'    => $this->txn['debit_contact_id'],
+                        'contact_id'    => $this->txn['contact_id'],
                         'base_currency' =>  Auth::user()->tenant->base_currency,
                         'quote_currency' =>  Auth::user()->tenant->base_currency,
                         'exchange_rate' =>  1,
@@ -206,7 +206,7 @@ trait TxnTypeBasedSpecifics
                         'financial_account_code'    => 90, //Foreign Exchange Gain
                         'effect'        => 'credit',
                         'total'         => $this->txn['forex_gain'],
-                        'contact_id'    => $this->txn['debit_contact_id'],
+                        'contact_id'    => $this->txn['contact_id'],
                         'base_currency' =>  Auth::user()->tenant->base_currency,
                         'quote_currency' =>  Auth::user()->tenant->base_currency,
                         'exchange_rate' =>  1,
@@ -235,7 +235,7 @@ trait TxnTypeBasedSpecifics
                         'financial_account_code'    => 91, //Foreign Exchange loss
                         'effect'        => 'debit',
                         'total'         => $this->txn['forex_loss'],
-                        'contact_id'    => $this->txn['debit_contact_id'],
+                        'contact_id'    => $this->txn['contact_id'],
                         'base_currency' =>  Auth::user()->tenant->base_currency,
                         'quote_currency' =>  Auth::user()->tenant->base_currency,
                         'exchange_rate' =>  1,

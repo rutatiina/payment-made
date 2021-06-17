@@ -77,8 +77,7 @@ class PaymentMadeValidateService
         $data['date'] = $requestInstance->input('date');
         $data['debit_financial_account_code'] = $settings->financial_account_to_debit->code;
         $data['credit_financial_account_code'] = $settings->financial_account_to_credit->code;
-        $data['debit_contact_id'] = $requestInstance->contact_id;
-        $data['credit_contact_id'] = $requestInstance->contact_id;
+        $data['contact_id'] = $requestInstance->contact_id;
         $data['contact_name'] = $contact->name;
         $data['contact_address'] = trim($contact->shipping_address_street1 . ' ' . $contact->shipping_address_street2);
         $data['reference'] = $requestInstance->input('reference', null);
@@ -138,7 +137,7 @@ class PaymentMadeValidateService
             'financial_account_code' => $settings->financial_account_to_debit->code,
             'effect' => 'debit',
             'total' => $data['total'],
-            'contact_id' => $data['debit_contact_id']
+            'contact_id' => $data['contact_id']
         ];
 
         //CR ledger
@@ -146,7 +145,7 @@ class PaymentMadeValidateService
             'financial_account_code' => $settings->financial_account_to_credit->code,
             'effect' => 'credit',
             'total' => $data['total'],
-            'contact_id' => $data['credit_contact_id']
+            'contact_id' => $data['contact_id']
         ];
 
         //print_r($data); exit;

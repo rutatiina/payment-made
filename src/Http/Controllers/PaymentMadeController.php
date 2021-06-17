@@ -59,8 +59,7 @@ class PaymentMadeController extends Controller
         {
             $query->where(function ($q) use ($request)
             {
-                $q->where('debit_contact_id', $request->contact);
-                $q->orWhere('credit_contact_id', $request->contact);
+                $q->where('contact_id', $request->contact);
             });
         }
 
@@ -113,22 +112,12 @@ class PaymentMadeController extends Controller
         $txnAttributes['terms_and_conditions'] = null;
         $txnAttributes['items'] = [];
 
-        unset($txnAttributes['txn_entree_id']); //!important
-        unset($txnAttributes['txn_type_id']); //!important
-        unset($txnAttributes['debit_contact_id']); //!important
-        unset($txnAttributes['credit_contact_id']); //!important
-
-        $data = [
+        return [
             'pageTitle' => 'Record Payment', #required
             'pageAction' => 'Record', #required
             'txnUrlStore' => '/payments-made', #required
             'txnAttributes' => $txnAttributes, #required
         ];
-
-        if (FacadesRequest::wantsJson())
-        {
-            return $data;
-        }
     }
 
     public function store(Request $request)
@@ -214,7 +203,7 @@ class PaymentMadeController extends Controller
         {
             $item['selectedTaxes'] = [];
 
-            $item['txn_contact_id'] = $item['invoice']['debit_contact_id'];
+            $item['txn_contact_id'] = $item['invoice']['contact_id'];
             $item['txn_number'] = $item['invoice']['number_string'];
             $item['max_receipt_amount'] = $item['invoice']['balance'];
             $item['txn_exchange_rate'] = $item['invoice']['exchange_rate'];
@@ -425,7 +414,7 @@ class PaymentMadeController extends Controller
         $query = Bill::query();
         $query->orderBy('date', 'ASC');
         $query->orderBy('id', 'ASC');
-        $query->whereIn('debit_contact_id', $contact_ids);
+        $query->whereIn('contact_id', $contact_ids);
         //$query->where('total_paid', '>', 0); //total_paid < total //todo ASAP
 
         $txns = $query->get();
@@ -453,12 +442,12 @@ class PaymentMadeController extends Controller
                 'bill' => $itemTxn,
                 'paidInFull' => false,
 
-                'txn_contact_id' => $txn->debit_contact_id,
+                'txn_contact_id' => $txn->contact_id,
                 'txn_number' => $txn->number,
                 'max_receipt_amount' => $txn->balance,
                 'txn_exchange_rate' => $txn->exchange_rate,
 
-                'contact_id' => $txn->debit_contact_id,
+                'contact_id' => $txn->contact_id,
                 'description' => 'Invoice #' . $txn->number,
                 'displayTotal' => 0,
                 'name' => 'Invoice #' . $txn->number,
