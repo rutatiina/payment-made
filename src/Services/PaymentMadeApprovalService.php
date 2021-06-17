@@ -15,7 +15,7 @@ trait PaymentMadeApprovalService
             return false;
         }
 
-        if ($data['balances_where_updated'] == 1)
+        if (isset($data['balances_where_updated']) && $data['balances_where_updated'])
         {
             //cannot update balances for task already completed
             return false;
