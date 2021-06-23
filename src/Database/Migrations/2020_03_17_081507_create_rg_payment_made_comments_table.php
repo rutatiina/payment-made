@@ -26,7 +26,7 @@ class CreateRgPaymentMadeCommentsTable extends Migration
 
             //>> table columns
             $table->unsignedBigInteger('project_id')->nullable();
-            $table->unsignedBigInteger('payments_made_id');
+            $table->unsignedBigInteger('payment_made_id');
             $table->string('comment', 250);
 
         });

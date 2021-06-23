@@ -93,7 +93,6 @@ class PaymentMade extends Model
         $attributes['ledgers'] = [];
         $attributes['comments'] = [];
         $attributes['contact'] = [];
-        $attributes['recurring'] = [];
 
         return $attributes;
     }
@@ -114,29 +113,29 @@ class PaymentMade extends Model
         return ucfirst($f->format($this->total));
     }
 
-    public function debit_account()
+    public function debit_financial_account()
     {
         return $this->hasOne('Rutatiina\FinancialAccounting\Models\Account', 'code', 'debit_financial_account_code');
     }
 
-    public function credit_account()
+    public function credit_financial_account()
     {
         return $this->hasOne('Rutatiina\FinancialAccounting\Models\Account', 'code', 'credit_financial_account_code');
     }
 
     public function items()
     {
-        return $this->hasMany('Rutatiina\PaymentMade\Models\PaymentMadeItem', 'payments_made_id')->orderBy('id', 'asc');
+        return $this->hasMany('Rutatiina\PaymentMade\Models\PaymentMadeItem', 'payment_made_id')->orderBy('id', 'asc');
     }
 
     public function ledgers()
     {
-        return $this->hasMany('Rutatiina\FinancialAccounting\Models\TxnLedger', 'payments_made_id')->orderBy('id', 'asc');
+        return $this->hasMany('Rutatiina\PaymentMade\Models\PaymentMadeLedger', 'payment_made_id')->orderBy('id', 'asc');
     }
 
     public function comments()
     {
-        return $this->hasMany('Rutatiina\FinancialAccounting\Models\TxnComment', 'payments_made_id')->latest();
+        return $this->hasMany('Rutatiina\PaymentMade\Models\PaymentMadeComment', 'payment_made_id')->latest();
     }
 
     public function contact()
@@ -146,7 +145,7 @@ class PaymentMade extends Model
 
     public function item_taxes()
     {
-        return $this->hasMany('Rutatiina\PaymentMade\Models\PaymentMadeItemTax', 'payments_made_id', 'id');
+        return $this->hasMany('Rutatiina\PaymentMade\Models\PaymentMadeItemTax', 'payment_made_id', 'id');
     }
 
     public function getTaxesAttribute()

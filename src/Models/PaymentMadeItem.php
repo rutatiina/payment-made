@@ -48,7 +48,17 @@ class PaymentMadeItem extends Model
 
     public function payments_made()
     {
-        return $this->belongsTo('Rutatiina\PaymentMade\Models\PaymentMade', 'payments_made_id');
+        return $this->belongsTo('Rutatiina\PaymentMade\Models\PaymentMade', 'payment_made_id');
+    }
+
+    public function bill()
+    {
+        return $this->hasOne('Rutatiina\Bill\Models\Bill', 'id', 'bill_id');
+    }
+
+    public function taxes()
+    {
+        return $this->hasMany('Rutatiina\PaymentMade\Models\PaymentMadeItemTax', 'payment_made_item_id', 'id');
     }
 
 }

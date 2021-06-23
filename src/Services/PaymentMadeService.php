@@ -34,7 +34,7 @@ class PaymentMadeService
         $taxes = Tax::all()->keyBy('code');
 
         $txn = PaymentMade::findOrFail($id);
-        $txn->load('contact', 'items.taxes', 'items.invoice');
+        $txn->load('contact', 'items.taxes', 'items.bill');
         $txn->setAppends(['taxes']);
 
         $attributes = $txn->toArray();
@@ -43,7 +43,6 @@ class PaymentMadeService
 
         $attributes['_method'] = 'PATCH';
 
-        $attributes['contact_id'] = $attributes['contact_id'];
         $attributes['contact']['currency'] = $txn->contact->currency_and_exchange_rate;
         $attributes['contact']['currencies'] = $txn->contact->currencies_and_exchange_rates;
 
@@ -113,8 +112,7 @@ class PaymentMadeService
             $Txn->payment_mode = $data['payment_mode'];
             $Txn->branch_id = $data['branch_id'];
             $Txn->store_id = $data['store_id'];
-            $Txn->contact_notes = $data['contact_notes'];
-            $Txn->terms_and_conditions = $data['terms_and_conditions'];
+            $Txn->notes = $data['notes'];
             $Txn->status = $data['status'];
 
             $Txn->save();
@@ -127,10 +125,10 @@ class PaymentMadeService
             PaymentMadeItemService::store($data);
 
             //Save the ledgers >> $data['ledgers']; and update the balances
-            //NOTE >> no need to update ledgers since this is not an accounting entry
+            $Txn->ledgers()->createMany($data['ledgers']);
 
             //check status and update financial account and contact balances accordingly
-            PaymentMadeApprovalService::run($data);
+            PaymentMadeApprovalService::run($Txn);
 
             DB::connection('tenant')->commit();
 
@@ -186,59 +184,24 @@ class PaymentMadeService
                 return false;
             }
 
-            //Delete affected relations
-            $Txn->ledgers()->delete();
-            $Txn->items()->delete();
-            $Txn->item_taxes()->delete();
-            $Txn->comments()->delete();
-
             //reverse the account balances
             AccountBalanceUpdateService::doubleEntry($Txn->toArray(), true);
 
             //reverse the contact balances
             ContactBalanceUpdateService::doubleEntry($Txn->toArray(), true);
 
-            $Txn->tenant_id = $data['tenant_id'];
-            $Txn->created_by = Auth::id();
-            $Txn->document_name = $data['document_name'];
-            $Txn->number = $data['number'];
-            $Txn->date = $data['date'];
-            $Txn->debit_financial_account_code = $data['debit_financial_account_code'];
-            $Txn->credit_financial_account_code = $data['credit_financial_account_code'];
-            $Txn->contact_id = $data['contact_id'];
-            $Txn->contact_name = $data['contact_name'];
-            $Txn->contact_address = $data['contact_address'];
-            $Txn->reference = $data['reference'];
-            $Txn->base_currency = $data['base_currency'];
-            $Txn->quote_currency = $data['quote_currency'];
-            $Txn->exchange_rate = $data['exchange_rate'];
-            $Txn->taxable_amount = $data['taxable_amount'];
-            $Txn->total = $data['total'];
-            $Txn->payment_mode = $data['payment_mode'];
-            $Txn->branch_id = $data['branch_id'];
-            $Txn->store_id = $data['store_id'];
-            $Txn->contact_notes = $data['contact_notes'];
-            $Txn->terms_and_conditions = $data['terms_and_conditions'];
-            $Txn->status = $data['status'];
+            //Delete affected relations
+            $Txn->ledgers()->delete();
+            $Txn->items()->delete();
+            $Txn->item_taxes()->delete();
+            $Txn->comments()->delete();
+            $Txn->delete();
 
-            $Txn->save();
-
-            $data['id'] = $Txn->id;
-
-            //print_r($data['items']); exit;
-
-            //Save the items >> $data['items']
-            PaymentMadeItemService::store($data);
-
-            //Save the ledgers >> $data['ledgers']; and update the balances
-            PaymentMadeLedgersService::store($data);
-
-            //check status and update financial account and contact balances accordingly
-            PaymentMadeApprovalService::run($data);
+            $txnStore = self::store($requestInstance);
 
             DB::connection('tenant')->commit();
 
-            return $Txn;
+            return $txnStore;
 
         }
         catch (\Throwable $e)
@@ -281,18 +244,17 @@ class PaymentMadeService
                 return false;
             }
 
-            //Delete affected relations
-            $Txn->ledgers()->delete();
-            $Txn->items()->delete();
-            $Txn->item_taxes()->delete();
-            $Txn->comments()->delete();
-
             //reverse the account balances
             AccountBalanceUpdateService::doubleEntry($Txn, true);
 
             //reverse the contact balances
             ContactBalanceUpdateService::doubleEntry($Txn, true);
 
+            //Delete affected relations
+            $Txn->ledgers()->delete();
+            $Txn->items()->delete();
+            $Txn->item_taxes()->delete();
+            $Txn->comments()->delete();
             $Txn->delete();
 
             DB::connection('tenant')->commit();
@@ -334,18 +296,13 @@ class PaymentMadeService
             return false;
         }
 
-        $data = $Txn->toArray();
-
         //start database transaction
         DB::connection('tenant')->beginTransaction();
 
         try
         {
-            PaymentMadeApprovalService::run($data);
-
-            //update the status of the txn
-            $Txn->status = 'Approved';
-            $Txn->save();
+            $Txn->status = 'approved';
+            PaymentMadeApprovalService::run($Txn);
 
             DB::connection('tenant')->commit();
 

@@ -20,7 +20,7 @@ class PaymentMadeValidateService
 
         //validate the data
         $customMessages = [
-            'debit_financial_account_code.required' => "The deposit to field is required.",
+            'credit_financial_account_code.required' => "The paid through field is required.",
             'items.*.taxes.*.code.required' => "Tax code is required.",
             'items.*.taxes.*.total.required' => "Tax total is required.",
             //'items.*.taxes.*.exclusive.required' => "Tax exclusive amount is required.",
@@ -30,10 +30,8 @@ class PaymentMadeValidateService
             'contact_id' => 'required|numeric',
             'date' => 'required|date',
             'payment_mode' => 'required',
-            'debit_financial_account_code' => 'required',
+            'credit_financial_account_code' => 'required',
             'base_currency' => 'required',
-            'due_date' => 'date|nullable',
-            'salesperson_contact_id' => 'numeric|nullable',
             'contact_notes' => 'string|nullable',
 
             'items' => 'required|array',
@@ -58,8 +56,7 @@ class PaymentMadeValidateService
         // << data validation <<------------------------------------------------------------
 
         $settings = PaymentMadeSetting::has('financial_account_to_debit')
-            ->has('financial_account_to_credit')
-            ->with(['financial_account_to_debit', 'financial_account_to_credit'])
+            ->with(['financial_account_to_debit'])
             ->firstOrFail();
         //Log::info($this->settings);
 
@@ -76,7 +73,7 @@ class PaymentMadeValidateService
         $data['number'] = $requestInstance->input('number');
         $data['date'] = $requestInstance->input('date');
         $data['debit_financial_account_code'] = $settings->financial_account_to_debit->code;
-        $data['credit_financial_account_code'] = $settings->financial_account_to_credit->code;
+        $data['credit_financial_account_code'] = $requestInstance->credit_financial_account_code;
         $data['contact_id'] = $requestInstance->contact_id;
         $data['contact_name'] = $contact->name;
         $data['contact_address'] = trim($contact->shipping_address_street1 . ' ' . $contact->shipping_address_street2);
@@ -86,12 +83,10 @@ class PaymentMadeValidateService
         $data['exchange_rate'] = $requestInstance->input('exchange_rate', 1);
         $data['branch_id'] = $requestInstance->input('branch_id', null);
         $data['store_id'] = $requestInstance->input('store_id', null);
-        $data['terms_and_conditions'] = $requestInstance->input('terms_and_conditions', null);
-        $data['contact_notes'] = $requestInstance->input('contact_notes', null);
+        $data['notes'] = $requestInstance->input('notes', null);
         $data['status'] = $requestInstance->input('status', null);
         $data['balances_where_updated'] = $requestInstance->input('balances_where_updated', null);
         $data['payment_mode'] = $requestInstance->input('payment_mode', null);
-
 
         //set the transaction total to zero
         $txnTotal = 0;
@@ -120,7 +115,7 @@ class PaymentMadeValidateService
                 'tenant_id' => $data['tenant_id'],
                 'created_by' => $data['created_by'],
                 'contact_id' => $item['contact_id'],
-                'invoice_id' => $item['invoice_id'],
+                'bill_id' => $item['bill_id'],
                 'description' => $item['description'],
                 'amount' => $item['amount'],
                 'taxable_amount' => $itemTaxableAmount,
@@ -142,7 +137,7 @@ class PaymentMadeValidateService
 
         //CR ledger
         $data['ledgers'][] = [
-            'financial_account_code' => $settings->financial_account_to_credit->code,
+            'financial_account_code' => $requestInstance->credit_financial_account_code,
             'effect' => 'credit',
             'total' => $data['total'],
             'contact_id' => $data['contact_id']

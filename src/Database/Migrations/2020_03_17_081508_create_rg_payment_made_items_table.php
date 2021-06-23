@@ -26,20 +26,13 @@ class CreateRgPaymentMadeItemsTable extends Migration
 
             //>> table columns
             $table->unsignedBigInteger('project_id')->nullable();
-            $table->unsignedBigInteger('payments_made_id');
-
+            $table->unsignedBigInteger('payment_made_id');
             $table->unsignedBigInteger('bill_id')->nullable();
-
             $table->unsignedBigInteger('contact_id')->nullable();
-            $table->string('name', 100);
             $table->string('description', 250)->nullable();
-            $table->unsignedInteger('quantity');
-            $table->unsignedDecimal('rate', 20,5);
-            $table->unsignedDecimal('total', 20, 5);
+            $table->unsignedDecimal('amount', 20, 5);
+            $table->unsignedDecimal('taxable_amount', 20, 5);
             $table->unsignedDecimal('amount_withheld', 20, 5);
-            $table->unsignedInteger('units')->nullable();
-            $table->string('batch', 100)->nullable();
-            $table->date('expiry')->nullable();
 
         });
     }

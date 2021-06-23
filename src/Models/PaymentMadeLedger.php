@@ -38,7 +38,7 @@ class PaymentMadeLedger extends Model
 
     public function payments_made()
     {
-        return $this->belongsTo('Rutatiina\PaymentMade\Models\PaymentMade', 'payments_made_id');
+        return $this->belongsTo('Rutatiina\PaymentMade\Models\PaymentMade', 'payment_made_id');
     }
 
 }

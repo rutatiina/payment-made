@@ -26,7 +26,7 @@ class CreateRgPaymentMadeLedgersTable extends Migration
 
             //>> table columns
             $table->unsignedBigInteger('project_id')->nullable();
-            $table->unsignedBigInteger('payments_made_id');
+            $table->unsignedBigInteger('payment_made_id');
             $table->date('date');
             $table->date('external_date');
             $table->unsignedBigInteger('financial_account_code');

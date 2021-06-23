@@ -7,15 +7,15 @@ use Rutatiina\FinancialAccounting\Services\ContactBalanceUpdateService;
 
 trait PaymentMadeApprovalService
 {
-    public static function run($data)
+    public static function run($txn)
     {
-        if (strtolower($data['status']) == 'draft')
+        if (strtolower($txn['status']) == 'draft')
         {
             //cannot update balances for drafts
             return false;
         }
 
-        if (isset($data['balances_where_updated']) && $data['balances_where_updated'])
+        if (isset($txn['balances_where_updated']) && $txn['balances_where_updated'])
         {
             //cannot update balances for task already completed
             return false;
@@ -25,10 +25,14 @@ trait PaymentMadeApprovalService
         //$this->inventory(); //currentlly inventory update for estimates is disabled
 
         //Update the account balances
-        AccountBalanceUpdateService::doubleEntry($data);
+        AccountBalanceUpdateService::doubleEntry($txn);
 
         //Update the contact balances
-        ContactBalanceUpdateService::doubleEntry($data);
+        ContactBalanceUpdateService::doubleEntry($txn);
+
+        $txn->status = 'approved';
+        $txn->balances_where_updated = 1;
+        $txn->save();
 
         return true;
     }

@@ -33,6 +33,7 @@ class CreateRgPaymentMadeSettingsTable extends Migration
             $table->unsignedTinyInteger('minimum_number_length')->default(5); //the number length should always be padded if bellow this value e.g. 3 means 001/022/ 1234
             $table->unsignedBigInteger('minimum_number')->default(1)->nullable();
             $table->unsignedBigInteger('maximum_number')->nullable();
+            $table->string('payment_mode_default', 100)->nullable()->default('Cash');
 
             //double entry settings
             $table->unsignedBigInteger('debit_financial_account_code')->nullable();

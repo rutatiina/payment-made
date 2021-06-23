@@ -26,8 +26,8 @@ class CreateRgPaymentMadeItemTaxesTable extends Migration
 
             //>> table columns
             $table->unsignedBigInteger('project_id')->nullable();
-            $table->unsignedBigInteger('payments_made_id');
-            $table->unsignedBigInteger('payments_made_item_id');
+            $table->unsignedBigInteger('payment_made_id');
+            $table->unsignedBigInteger('payment_made_item_id');
             $table->char('tax_code', 50);
             $table->unsignedDecimal('amount', 20,5);
             $table->unsignedDecimal('inclusive', 20,5);

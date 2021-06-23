@@ -5,6 +5,7 @@ namespace Rutatiina\PaymentMade\Http\Controllers;
 use Rutatiina\FinancialAccounting\Models\Account;
 use Rutatiina\PaymentMade\Models\PaymentMadeSetting;
 use Rutatiina\PaymentMade\Classes\PreValidation;
+use Rutatiina\PaymentMade\Services\PaymentMadeService;
 use URL;
 use PDF;
 use Illuminate\Support\Facades\Auth;
@@ -65,19 +66,11 @@ class PaymentMadeController extends Controller
 
         $txns = $query->latest()->paginate($request->input('per_page', 20));
 
-        $txns->load('debit_account');
+        $txns->load('debit_financial_account');
 
         return [
             'tableData' => $txns
         ];
-    }
-
-    private function nextNumber()
-    {
-        $txn = PaymentMade::latest()->first();
-        $settings = PaymentMadeSetting::first();
-
-        return $settings->number_prefix . (str_pad((optional($txn)->number + 1), $settings->minimum_number_length, "0", STR_PAD_LEFT)) . $settings->number_postfix;
     }
 
     public function create()
@@ -88,26 +81,22 @@ class PaymentMadeController extends Controller
             return view('l-limitless-bs4.layout_2-ltr-default.appVue');
         }
 
+        $settings = PaymentMadeSetting::has('financial_account_to_debit')->with(['financial_account_to_debit'])->firstOrFail();
+
         $tenant = Auth::user()->tenant;
 
         $txnAttributes = (new PaymentMade())->rgGetAttributes();
 
-        $txnAttributes['number'] = $this->nextNumber();
-
+        $txnAttributes['number'] = PaymentMadeService::nextNumber();
         $txnAttributes['status'] = 'approved';
         $txnAttributes['contact_id'] = '';
         $txnAttributes['contact'] = json_decode('{"currencies":[]}'); #required
         $txnAttributes['date'] = date('Y-m-d');
         $txnAttributes['base_currency'] = $tenant->base_currency;
         $txnAttributes['quote_currency'] = $tenant->base_currency;
+        $txnAttributes['payment_mode'] = optional($settings)->payment_mode_default;
+        $txnAttributes['credit_financial_account_code'] = optional($settings)->financial_account_to_credit->code;
         $txnAttributes['taxes'] = json_decode('{}');
-        $txnAttributes['isRecurring'] = false;
-        $txnAttributes['recurring'] = [
-            'date_range' => [],
-            'day_of_month' => '*',
-            'month' => '*',
-            'day_of_week' => '*',
-        ];
         $txnAttributes['contact_notes'] = null;
         $txnAttributes['terms_and_conditions'] = null;
         $txnAttributes['items'] = [];
@@ -124,27 +113,13 @@ class PaymentMadeController extends Controller
     {
         //$data = $request->all();
 
-        // >> format posted data
-        $preValidation = (new PreValidation())->run($request->all());
+        $storeService = PaymentMadeService::store($request);
 
-        if ($preValidation['status'] == false)
-        {
-            return $preValidation;
-        }
-
-        $data = $preValidation['data'];
-
-        // << format posted data
-
-        $TxnStore = new TxnStore();
-        $TxnStore->txnInsertData = $data;
-        $insert = $TxnStore->run();
-
-        if ($insert == false)
+        if ($storeService == false)
         {
             return [
                 'status' => false,
-                'messages' => $TxnStore->errors
+                'messages' => PaymentMadeService::$errors
             ];
         }
 
@@ -152,7 +127,7 @@ class PaymentMadeController extends Controller
             'status' => true,
             'messages' => ['Payment saved'],
             'number' => 0,
-            'callback' => URL::route('payments-made.show', [$insert->id], false)
+            'callback' => route('payments-made.show', [$storeService->id], false)
         ];
     }
 
@@ -164,11 +139,15 @@ class PaymentMadeController extends Controller
             return view('l-limitless-bs4.layout_2-ltr-default.appVue');
         }
 
-        if (FacadesRequest::wantsJson())
-        {
-            $TxnRead = new TxnRead();
-            return $TxnRead->run($id);
-        }
+        $txn = PaymentMade::findOrFail($id);
+        $txn->load('contact', 'items.taxes');
+        $txn->setAppends([
+            'taxes',
+            'number_string',
+            'total_in_words',
+        ]);
+
+        return $txn->toArray();
     }
 
     public function edit($id)
@@ -180,34 +159,7 @@ class PaymentMadeController extends Controller
         }
 
         //get the receipt details
-        $paymentMade = PaymentMade::findOrFail($id);
-
-        $paymentMade->load('contact', 'debit_account', 'credit_account', 'items.invoice');
-
-        $contact = $paymentMade->contact;
-
-        $txnAttributes = $paymentMade->toArray();
-
-        $txnAttributes['_method'] = 'PATCH';
-
-        //the contact parameter has to be formatted like the data for the drop down
-        $txnAttributes['contact'] = [
-            'id' => $contact->id,
-            'tenant_id' => $contact->tenant_id,
-            'display_name' => $contact->display_name,
-            'currencies' => $contact->currencies_and_exchange_rates,
-            'currency' => $contact->currency_and_exchange_rate,
-        ];
-
-        foreach ($txnAttributes['items'] as &$item)
-        {
-            $item['selectedTaxes'] = [];
-
-            $item['txn_contact_id'] = $item['invoice']['contact_id'];
-            $item['txn_number'] = $item['invoice']['number_string'];
-            $item['max_receipt_amount'] = $item['invoice']['balance'];
-            $item['txn_exchange_rate'] = $item['invoice']['exchange_rate'];
-        }
+        $txnAttributes = PaymentMadeService::edit($id);
 
         $data = [
             'pageTitle' => 'Edit Payment', #required
@@ -224,27 +176,13 @@ class PaymentMadeController extends Controller
     {
         //return $request->all();
 
-        // >> format posted data
-        $preValidation = (new PreValidation())->run($request->all());
+        $storeService = PaymentMadeService::update($request);
 
-        if ($preValidation['status'] == false)
-        {
-            return $preValidation;
-        }
-
-        $data = $preValidation['data'];
-
-        // << format posted data
-
-        $TxnStore = new TxnUpdate();
-        $TxnStore->txnInsertData = $data;
-        $insert = $TxnStore->run();
-
-        if ($insert == false)
+        if ($storeService == false)
         {
             return [
                 'status' => false,
-                'messages' => $TxnStore->errors
+                'messages' => PaymentMadeService::$errors
             ];
         }
 
@@ -252,58 +190,50 @@ class PaymentMadeController extends Controller
             'status' => true,
             'messages' => ['Payment made updated'],
             'number' => 0,
-            'callback' => URL::route('payments-made.show', [$insert->id], false)
+            'callback' => route('payments-made.show', [$storeService->id], false)
         ];
     }
 
-    public function destroy()
+    public function destroy($id)
     {
+        $destroy = PaymentMadeService::destroy($id);
+
+        if ($destroy)
+        {
+            return [
+                'status' => true,
+                'messages' => ['Payment made deleted'],
+                'callback' => route('payments-made.index', [], false)
+            ];
+        }
+        else
+        {
+            return [
+                'status' => false,
+                'messages' => PaymentMadeService::$errors
+            ];
+        }
     }
 
     #-----------------------------------------------------------------------------------
 
     public function approve($id)
     {
-        $TxnApprove = new TxnApprove();
-        $approve = $TxnApprove->run($id);
+        $approve = PaymentMadeService::approve($id);
 
         if ($approve == false)
         {
             return [
                 'status' => false,
-                'messages' => $TxnApprove->errors
+                'messages' => PaymentMadeService::$errors
             ];
         }
 
         return [
             'status' => true,
-            'messages' => ['Payment approved'],
+            'messages' => ['Payment made approved'],
         ];
 
-    }
-
-    public function copy($id)
-    {
-        //load the vue version of the app
-        if (!FacadesRequest::wantsJson())
-        {
-            return view('l-limitless-bs4.layout_2-ltr-default.appVue');
-        }
-
-        $TxnCopy = new TxnCopy();
-        $txnAttributes = $TxnCopy->run($id);
-
-        $data = [
-            'pageTitle' => 'Copy Receipts', #required
-            'pageAction' => 'Copy', #required
-            'txnUrlStore' => '/financial-accounts/purchases/payments', #required
-            'txnAttributes' => $txnAttributes, #required
-        ];
-
-        if (FacadesRequest::wantsJson())
-        {
-            return $data;
-        }
     }
 
     public function creditAccounts()
@@ -373,6 +303,7 @@ class PaymentMadeController extends Controller
 
         $validator = Validator::make($request->all(), [
             'contact_ids' => ['required', 'array'],
+            'contact_ids.*' => ['numeric'],
         ]);
 
         if ($validator->fails())
@@ -415,7 +346,7 @@ class PaymentMadeController extends Controller
         $query->orderBy('date', 'ASC');
         $query->orderBy('id', 'ASC');
         $query->whereIn('contact_id', $contact_ids);
-        //$query->where('total_paid', '>', 0); //total_paid < total //todo ASAP
+        $query->whereColumn('total_paid', '<', 'total');
 
         $txns = $query->get();
 
@@ -450,12 +381,9 @@ class PaymentMadeController extends Controller
                 'contact_id' => $txn->contact_id,
                 'description' => 'Invoice #' . $txn->number,
                 'displayTotal' => 0,
-                'name' => 'Invoice #' . $txn->number,
-                'quantity' => 1,
-                'rate' => 0,
+                'amount' => 0,
                 'selectedItem' => json_decode('{}'),
                 'selectedTaxes' => [],
-                'total' => 0,
                 'amount_withheld' => 0,
                 'bill_id' => $txn->id
             ];

@@ -26,7 +26,7 @@ class CreateRgPaymentMadeRecurringsTable extends Migration
 
             //>> table columns
             $table->unsignedBigInteger('project_id')->nullable();
-            $table->unsignedBigInteger('payments_made_id');
+            $table->unsignedBigInteger('payment_made_id');
             $table->unsignedBigInteger('txn_entree_id');
             $table->unsignedBigInteger('txn_type_id');
             $table->string('frequency', 50);
