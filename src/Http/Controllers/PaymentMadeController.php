@@ -51,7 +51,7 @@ class PaymentMadeController extends Controller
         //load the vue version of the app
         if (!FacadesRequest::wantsJson())
         {
-            return view('l-limitless-bs4.layout_2-ltr-default.appVue');
+            return view('ui.limitless::layout_2-ltr-default.appVue');
         }
 
         $query = PaymentMade::query();
@@ -78,7 +78,7 @@ class PaymentMadeController extends Controller
         //load the vue version of the app
         if (!FacadesRequest::wantsJson())
         {
-            return view('l-limitless-bs4.layout_2-ltr-default.appVue');
+            return view('ui.limitless::layout_2-ltr-default.appVue');
         }
 
         $settings = PaymentMadeSetting::has('financial_account_to_debit')->with(['financial_account_to_debit'])->firstOrFail();
@@ -136,7 +136,7 @@ class PaymentMadeController extends Controller
         //load the vue version of the app
         if (!FacadesRequest::wantsJson())
         {
-            return view('l-limitless-bs4.layout_2-ltr-default.appVue');
+            return view('ui.limitless::layout_2-ltr-default.appVue');
         }
 
         $txn = PaymentMade::findOrFail($id);
@@ -155,7 +155,7 @@ class PaymentMadeController extends Controller
         //load the vue version of the app
         if (!FacadesRequest::wantsJson())
         {
-            return view('l-limitless-bs4.layout_2-ltr-default.appVue');
+            return view('ui.limitless::layout_2-ltr-default.appVue');
         }
 
         //get the receipt details
