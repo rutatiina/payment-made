@@ -103,7 +103,7 @@
                 </div>
                 -->
 
-                <div class="table-responsive">
+                <div class="table-responsive overflow-visible">
                     <table class="table table-hover">
                         <thead>
                             <tr class="table-active">
