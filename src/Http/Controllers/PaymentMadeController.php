@@ -40,10 +40,10 @@ class PaymentMadeController extends Controller
 
     public function __construct()
     {
-        $this->middleware('permission:payments.view');
-        $this->middleware('permission:payments.create', ['only' => ['create', 'store']]);
-        $this->middleware('permission:payments.update', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:payments.delete', ['only' => ['destroy']]);
+        $this->middleware('permission:payments-made.view');
+        $this->middleware('permission:payments-made.create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:payments-made.update', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:payments-made.delete', ['only' => ['destroy']]);
     }
 
     public function index(Request $request)
