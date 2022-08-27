@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Rutatiina\Bill\Models\Bill;
 use Rutatiina\PaymentMade\Models\PaymentMade;
 use Rutatiina\FinancialAccounting\Services\AccountBalanceUpdateService;
 use Rutatiina\FinancialAccounting\Services\ContactBalanceUpdateService;
@@ -184,6 +185,15 @@ class PaymentMadeService
                 return false;
             }
 
+            //undo the total_paid
+            foreach($Txn->items as $item)
+            {
+                if (isset($item['bill_id']))
+                {
+                    Bill::where('id', $item['bill_id'])->decrement('total_paid', $item['amount']);
+                }
+            }
+
             //reverse the account balances
             AccountBalanceUpdateService::doubleEntry($Txn->toArray(), true);
 
@@ -243,6 +253,8 @@ class PaymentMadeService
                 self::$errors[] = 'Approved Transaction cannot be not be deleted';
                 return false;
             }
+
+            //undo the total_paid - this is done dy deleting the items by the model
 
             //reverse the account balances
             AccountBalanceUpdateService::doubleEntry($Txn, true);

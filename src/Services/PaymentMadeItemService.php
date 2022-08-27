@@ -2,6 +2,7 @@
 
 namespace Rutatiina\PaymentMade\Services;
 
+use Rutatiina\Bill\Models\Bill;
 use Rutatiina\PaymentMade\Models\PaymentMadeItem;
 use Rutatiina\PaymentMade\Models\PaymentMadeItemTax;
 
@@ -43,6 +44,12 @@ class PaymentMadeItemService
                 $itemTax->save();
             }
             unset($tax);
+
+            //update the invoice total_paid
+            if (isset($item['bill_id']) && is_numeric($item['bill_id']))
+            {
+                Bill::where('id', $item['bill_id'])->increment('total_paid', $item['amount']);
+            }
         }
         unset($item);
 
