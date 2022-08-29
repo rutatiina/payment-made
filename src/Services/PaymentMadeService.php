@@ -181,7 +181,7 @@ class PaymentMadeService
 
             if ($Txn->status == 'approved')
             {
-                self::$errors[] = 'Approved Transaction cannot be not be edited';
+                self::$errors[] = 'Approved payment cannot be not be edited';
                 return false;
             }
 
@@ -250,7 +250,7 @@ class PaymentMadeService
 
             if ($Txn->status == 'approved')
             {
-                self::$errors[] = 'Approved Transaction cannot be not be deleted';
+                self::$errors[] = 'Approved Payments(s) cannot be not be deleted';
                 return false;
             }
 
