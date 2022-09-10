@@ -17,6 +17,7 @@ Route::group(['middleware' => ['web', 'auth', 'tenant', 'service.accounting']], 
 
     });
 
+    Route::resource('payments-made/accounts', 'Rutatiina\PaymentMade\Http\Controllers\PaymentMadeAccountController');
     Route::resource('payments-made/settings', 'Rutatiina\PaymentMade\Http\Controllers\PaymentMadeSettingsController');
     Route::resource('payments-made', 'Rutatiina\PaymentMade\Http\Controllers\PaymentMadeController');
 
