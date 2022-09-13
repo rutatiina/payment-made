@@ -303,16 +303,16 @@ class PaymentMadeController extends Controller
 
         $validator = Validator::make($request->all(), [
             'contact_ids' => ['required', 'array'],
-            'contact_ids.*' => ['numeric'],
+            'contact_ids.*' => ['numeric', 'nullable'],
         ]);
 
         if ($validator->fails())
         {
-            $response = ['status' => false, 'message' => ''];
+            $response = ['status' => false, 'messages' => []];
 
             foreach ($validator->errors()->all() as $field => $messages)
             {
-                $response['message'] .= "\n" . $messages;
+                $response['messages'][] = $messages;
             }
 
             return json_encode($response);

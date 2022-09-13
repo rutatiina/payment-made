@@ -15,6 +15,30 @@ class PaymentMadeValidateService
         //$request = request(); //used for the flash when validation fails
         $user = auth()->user();
 
+        //if no ivoice is tagged create the items parameter
+        if (!$requestInstance->items)
+        {
+            $requestInstance->request->add(['exchange_rate' => 1]);
+            $requestInstance->request->add([
+                'items' => [
+                    [
+                        //'invoice' => 0,        
+                        'txn_contact_id' => $requestInstance->contact_id,
+                        'txn_number' => 0,
+                        'max_receipt_amount' => $requestInstance->total,
+                        //'txn_exchange_rate' => $txn->exchange_rate,
+            
+                        'bill_id' => 0,
+                        'contact_id' => $requestInstance->contact_id,
+                        'description' => $requestInstance->description,
+                        'amount' => $requestInstance->total,
+                        'taxable_amount' => $requestInstance->total,
+                        'taxes' => [],
+                    ]
+                ]
+            ]);
+        }
+
 
         // >> data validation >>------------------------------------------------------------
 
