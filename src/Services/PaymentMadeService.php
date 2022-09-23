@@ -26,8 +26,9 @@ class PaymentMadeService
     {
         $count = PaymentMade::count();
         $settings = PaymentMadeSetting::first();
+        $nextNumber = $settings->minimum_number + ($count + 1);
 
-        return $settings->number_prefix . (str_pad(($count + 1), $settings->minimum_number_length, "0", STR_PAD_LEFT)) . $settings->number_postfix;
+        return $settings->number_prefix . (str_pad($nextNumber, $settings->minimum_number_length, "0", STR_PAD_LEFT)) . $settings->number_postfix;
     }
 
     public static function edit($id)
