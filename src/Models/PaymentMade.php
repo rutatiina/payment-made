@@ -6,9 +6,11 @@ use Rutatiina\Bill\Models\Bill;
 use Illuminate\Database\Eloquent\Model;
 use Rutatiina\Tenant\Scopes\TenantIdScope;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PaymentMade extends Model
 {
+    use SoftDeletes;
     use LogsActivity;
 
     protected static $logName = 'Txn';
@@ -51,7 +53,7 @@ class PaymentMade extends Model
 
         static::addGlobalScope(new TenantIdScope);
 
-        self::deleting(function($txn) { // before delete() method call this
+        self::deleted(function($txn) { // before delete() method call this
              $txn->items()->each(function($row) {
                 
                 //revert the total_paid
@@ -67,6 +69,25 @@ class PaymentMade extends Model
              });
              $txn->ledgers()->each(function($row) {
                 $row->delete();
+             });
+        });
+
+        self::restored(function($txn) { // before delete() method call this
+             $txn->items()->each(function($row) {
+                
+                //revert the total_paid
+                if (isset($row['bill_id']))
+                {
+                    Bill::where('id', $row['bill_id'])->increment('total_paid', $row['amount']);
+                }
+
+                $row->restore();
+             });
+             $txn->comments()->each(function($row) {
+                $row->restore();
+             });
+             $txn->ledgers()->each(function($row) {
+                $row->restore();
              });
         });
 
