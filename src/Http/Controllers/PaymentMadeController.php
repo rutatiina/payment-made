@@ -22,19 +22,10 @@ use Rutatiina\Banking\Models\Account as BankAccount;
 use Rutatiina\Contact\Traits\ContactTrait;
 use Yajra\DataTables\Facades\DataTables;
 
-use Rutatiina\PaymentMade\Classes\Store as TxnStore;
-use Rutatiina\PaymentMade\Classes\Approve as TxnApprove;
-use Rutatiina\PaymentMade\Classes\Read as TxnRead;
-use Rutatiina\PaymentMade\Classes\Copy as TxnCopy;
-use Rutatiina\PaymentMade\Classes\Number as TxnNumber;
-use Rutatiina\PaymentMade\Traits\Item as TxnItem;
-use Rutatiina\PaymentMade\Classes\Update as TxnUpdate;
-
 class PaymentMadeController extends Controller
 {
     use FinancialAccountingTrait;
     use ContactTrait;
-    use TxnItem;
 
     // >> get the item attributes template << !!important
 

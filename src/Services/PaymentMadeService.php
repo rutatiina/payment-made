@@ -126,8 +126,7 @@ class PaymentMadeService
             //Save the items >> $data['items']
             PaymentMadeItemService::store($data);
 
-            //Save the ledgers >> $data['ledgers']; and update the balances
-            $Txn->ledgers()->createMany($data['ledgers']);
+            $Txn->refresh();
 
             //check status and update financial account and contact balances accordingly
             PaymentMadeApprovalService::run($Txn);
@@ -178,7 +177,7 @@ class PaymentMadeService
 
         try
         {
-            $Txn = PaymentMade::with('items', 'ledgers')->findOrFail($data['id']);
+            $Txn = PaymentMade::with('items')->findOrFail($data['id']);
 
             if ($Txn->status == 'approved')
             {
@@ -202,7 +201,6 @@ class PaymentMadeService
             ContactBalanceUpdateService::doubleEntry($Txn->toArray(), true);
 
             //Delete affected relations
-            $Txn->ledgers()->delete();
             $Txn->items()->delete();
             $Txn->item_taxes()->delete();
             $Txn->comments()->delete();
@@ -247,7 +245,7 @@ class PaymentMadeService
 
         try
         {
-            $Txn = PaymentMade::with('items', 'ledgers')->findOrFail($id);
+            $Txn = PaymentMade::with('items')->findOrFail($id);
 
             if ($Txn->status == 'approved')
             {
@@ -263,11 +261,6 @@ class PaymentMadeService
             //reverse the contact balances
             ContactBalanceUpdateService::doubleEntry($Txn, true);
 
-            //Delete affected relations
-            $Txn->ledgers()->delete();
-            $Txn->items()->delete();
-            $Txn->item_taxes()->delete();
-            $Txn->comments()->delete();
             $Txn->delete();
 
             DB::connection('tenant')->commit();
@@ -301,7 +294,7 @@ class PaymentMadeService
 
     public static function approve($id)
     {
-        $Txn = PaymentMade::with(['ledgers'])->findOrFail($id);
+        $Txn = PaymentMade::findOrFail($id);
 
         if (strtolower($Txn->status) != 'draft')
         {
